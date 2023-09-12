@@ -77,8 +77,39 @@ def criar_bola_branca(imagem_tophat_normalizada, threshold, posicoes_anteriores)
 criar_bola_branca(imagem_tophat_normalizada, threshold, posicoes_anteriores)
 
 
-# Exibe a imagem com as bolas brancas
-cv2.imshow('Imagem com Bolas Brancas', imagem_tophat_normalizada)
-cv2.imshow('Imagem com Bolas preta', imagem_preta)
-cv2.waitKey(0)
+# Função de callback para a seleção de ROI
+def selecionar_roi(event, x, y, flags, param):
+    global roi_selected, roi_x, roi_y, roi_width, roi_height
+    if event == cv2.EVENT_LBUTTONDOWN:
+        roi_selected = True
+        roi_x, roi_y = x, y
+    elif event == cv2.EVENT_LBUTTONUP:
+        roi_selected = False
+        roi_width, roi_height = x - roi_x, y - roi_y
+        count_bolas_brancas_na_roi(imagem_preta[roi_y:roi_y+roi_height, roi_x:roi_x+roi_width])
+
+# Cria uma janela para exibir a imagem com bolas brancas
+cv2.namedWindow('Imagem com Bolas Brancas')
+
+# Inicializa variáveis para a seleção de ROI
+roi_selected = False
+roi_x, roi_y, roi_width, roi_height = 0, 0, 0, 0
+
+# Configura o callback do mouse
+cv2.setMouseCallback('Imagem com Bolas Brancas', selecionar_roi)
+
+# Função para contar bolas brancas na ROI
+def count_bolas_brancas_na_roi(roi):
+    _, thresholded_roi = cv2.threshold(roi, 1, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(thresholded_roi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    print(f'Número de bolas brancas na ROI: {len(contours)}')
+
+while True:
+    cv2.imshow('Imagem com Bolas Brancas', imagem_tophat_normalizada)
+
+    key = cv2.waitKey(1) & 0xFF
+
+    if key == ord('q'):  # Pressione 'q' para sair do loop
+        break
+
 cv2.destroyAllWindows()
